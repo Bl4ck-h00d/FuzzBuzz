@@ -1,0 +1,12 @@
+{
+  "name": "fuzzbuzz",
+  "version": "1.0.0",
+  "description": "Fuzzy search demo",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rohan Jha",
+  "license": "ISC"
+}

@@ -1,0 +1,1 @@
+export default WORD_SIZE=32
