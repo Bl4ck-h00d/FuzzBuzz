@@ -1,5 +1,6 @@
-import WORD_SIZE from "./constant";
+import { WORD_SIZE } from "./constant";
 import generateBitmaskForPatternCharacters from "./bitmaskTable";
+import fuzzySearch from "./fuzzySearch";
 
 // Shift-And algorithm
 /**
@@ -13,13 +14,14 @@ class BitapSearch {
   constructor(
     pattern,
     text,
-    options = { matchThreshold: 0.5, matchDistance: 100, location: 0 }
+    options = { matchThreshold: 1, matchDistance: 100, location: 0 }
   ) {
     this.pattern = pattern.toLowerCase();
     this.text = text.toLowerCase();
     this.__chunks = [];
+    this.options = options;
 
-    if (!this.pattern.lenght) {
+    if (!this.pattern.length) {
       throw new Error("Pattern cant be empty");
     }
 
@@ -39,12 +41,54 @@ class BitapSearch {
   }
 
   search() {
-    
-      // Exact match
-      if (this.pattern === this.text) {
-          let result = {
-              
-          }
+    // Exact match
+    if (this.pattern === this.text) {
+      let result = {
+        isMatch: true,
+        score: 0,
+      };
+      return result;
+    }
+
+    // Else use Bitap algorithm
+
+    const { matchThreshold, matchDistance, location } = this.options;
+
+    let hasMatches = false;
+    let totalScore = 0;
+    let allMatches = [];
+    // Loop through chunks to find a match
+    this.__chunks.forEach(({ pattern, bitmaskTable, startIndex }) => {
+      const { isMatch, score, possibleMatches } = fuzzySearch(
+        this.text,
+        pattern,
+        bitmaskTable,
+        {
+          location: location + startIndex,
+          matchDistance,
+          matchThreshold,
+        }
+      );
+
+      if (isMatch) {
+        hasMatches = true;
       }
+      totalScore += score;
+      if (hasMatches) {
+        allMatches = [...allMatches, possibleMatches];
+      }
+    });
+
+    console.log("Chunks", this.__chunks);
+
+    const result = {
+      isMatch: hasMatches,
+      score: hasMatches ? totalScore / this.__chunks.length : 1,
+      ...allMatches,
+    };
+
+    return result;
   }
 }
+
+export default BitapSearch;

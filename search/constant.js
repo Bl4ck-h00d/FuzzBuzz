@@ -1,1 +1,1 @@
-export default WORD_SIZE=32
+export const WORD_SIZE = 32;
