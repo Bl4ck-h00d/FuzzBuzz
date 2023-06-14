@@ -1,9 +1,37 @@
-import getScore from "./getScore";
-import { WORD_SIZE } from "./constant";
+const WORD_SIZE = 32;
+
+const generateBitmaskForPatternCharacters = (pattern) => {
+  let bitmaskTable = {};
+
+  for (const char of pattern) {
+    bitmaskTable[char] = 0;
+  }
+
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern.charAt(i);
+    bitmaskTable[char] |= 1 << (pattern.length - i - 1);
+  }
+
+  return bitmaskTable;
+};
+
+const getScore = (
+  pattern,
+  { errors = 0, currentLocation = 0, expectedLocation = 0, distance = 100 } = {}
+) => {
+  const accuracy = errors / pattern.length;
+  const proximity = Math.abs(expectedLocation - currentLocation);
+
+  if (!distance) {
+    return proximity ? 1.0 : accuracy;
+  }
+
+  return accuracy + proximity / distance;
+};
 
 const fuzzySearch = (text, pattern, bitMaskTable, options) => {
   const { location, matchDistance, matchThreshold } = options;
-
+  console.log(text, pattern, options);
   if (pattern.length > WORD_SIZE) {
     throw new Error("Pattern too long to search for");
   }
@@ -164,8 +192,85 @@ const fuzzySearch = (text, pattern, bitMaskTable, options) => {
     "Match => ",
     text.slice(bestLocation, bestLocation + patternSize)
   );
-  console.log("Possible Matches => ",possibleMatches);
+  console.log("Possible Matches => ", possibleMatches);
   return result;
 };
 
-export default fuzzySearch;
+class BitapSearch {
+  constructor(
+    pattern,
+    text,
+    options = { matchThreshold: 0.6, matchDistance: 100, location: 0 }
+  ) {
+    this.pattern = pattern.toLowerCase();
+    this.text = text.toLowerCase();
+    this.__chunks = [];
+    this.options = options;
+
+    if (!this.pattern.length) {
+      throw new Error("Pattern cant be empty");
+    }
+
+    const addChunk = (pattern, startIndex = 0) => {
+      this.__chunks.push({
+        pattern,
+        bitmaskTable: generateBitmaskForPatternCharacters(pattern),
+        startIndex,
+      });
+    };
+
+    if (pattern.length > WORD_SIZE) {
+      throw new Error("Pattern to big to search for");
+    } else {
+      addChunk(this.pattern);
+    }
+  }
+
+  search() {
+    // Exact match
+    if (this.pattern === this.text) {
+      let result = {
+        isMatch: true,
+        score: 0,
+      };
+      return result;
+    }
+
+    // Else use Bitap algorithm
+
+    const { matchThreshold, matchDistance, location } = this.options;
+
+    let hasMatches = false;
+    let totalScore = 0;
+    let allMatches = [];
+    // Loop through chunks to find a match
+    this.__chunks.forEach(({ pattern, bitmaskTable, startIndex }) => {
+      const { isMatch, score, possibleMatches } = fuzzySearch(
+        this.text,
+        pattern,
+        bitmaskTable,
+        {
+          location: location + startIndex,
+          matchDistance,
+          matchThreshold,
+        }
+      );
+
+      if (isMatch) {
+        hasMatches = true;
+      }
+      totalScore += score;
+      if (hasMatches) {
+          allMatches = [...allMatches, ...possibleMatches];
+      }
+    });
+
+    const result = {
+      isMatch: hasMatches,
+      score: hasMatches ? totalScore / this.__chunks.length : 1,
+      allMatches:[...allMatches],
+    };
+
+    return result;
+  }
+}

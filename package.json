@@ -6,7 +6,8 @@
   "type":"module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"NODE_OPTIONS='--experimental-specifier-resolution=node' node index.js"
+    "start":"NODE_OPTIONS='--experimental-specifier-resolution=node' node index.js",
+    "build": "npm run bundle && npm run minify"
   },
   "author": "Rohan Jha",
   "license": "ISC"

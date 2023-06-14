@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzz Buzz</title>
+    <script src="./index-minify.js"></script>
+
+
+</head>
+
+<body>
+    <h1>Fuzz Buzz Demo</h1>
+    <p>Fuzz Buzz is a lightweight fuzzy string matching library. It looks for a pattern within a larger text. This
+        implementation of match is fuzzy, meaning it can find a match even if the pattern contains errors and doesn't
+        exactly match what is found in the text. This implementation also accepts an expected location, near which the
+        match should be found. The candidate matches are scored based on a) the number of spelling differences between
+        the pattern and the text and b) the distance between the candidate match and the expected location. The match
+        distance parameter sets the relative importance of these two metrics.</p>
+
+    <form action="#" onsubmit="return false">
+        <h3>Text:</h3>
+        <TEXTAREA ID="text" STYLE="width: 100%" ROWS=10
+            onChange="textchange()">Lorem Ipsum is simply dummy text of the printing and typesetting industry. </TEXTAREA>
+
+        <h3>Pattern: (Pattern to search for in the text)</h3>
+        <P><INPUT ID="pattern" SIZE=32 VALUE="dummy"> <SPAN ID="maxlengthspan"></SPAN>
+            Due to limitations of the Bitap algorithm, the pattern has a limited length.</P>
+        <h3>Expected Location: </h3>
+        <P><INPUT ID="location" SIZE=4 MAXLENGTH=10 VALUE="0"> <SPAN ID="maxtextspan"></SPAN>
+            The expected location in the text, to look for pattern.</P>
+        <h3>Match Distance: </h3>
+        <P><INPUT ID="distance" SIZE=4 MAXLENGTH=10 VALUE="100"> <SPAN ID="maxtextspan"></SPAN>
+            Determines how far from the expected location, we should look for a match. A match distance of '0' requires
+            the match to be found exactly at the expected location and a match distance of '100' with a threshold of 0.6
+            would require a match to be within 60 characters from the expected location</P>
+        <h3>Match Threshold: </h3>
+        <P><INPUT TYPE="text" SIZE=3 MAXLENGTH=5 VALUE="0.6" ID="threshold"><BR>
+            Point at which we should give up finding a match. (Threshold = 0.0 (perfect match) and Threshold=1.0 (loose
+            match))</P>
+        
+    <INPUT TYPE="button" onClick="findMatch()" VALUE="Find &#128270;">
+    </form>
+    <DIV ID="outputdiv"></DIV>
+    <DIV ID="datediv"></DIV>
+    <script>
+        function findMatch() {
+          
+            let text = document.getElementById('text').value;
+            let pattern = document.getElementById('pattern').value;
+            let location = parseInt(document.getElementById('location').value, 10);
+            let matchDistance = parseFloat(document.getElementById('distance').value);
+            let matchThreshold = parseFloat(document.getElementById('threshold').value);
+
+            let finder = new BitapSearch(pattern, text, options={ matchThreshold, matchDistance, location })
+
+            let ms_start = (new Date()).getTime();
+            const result = finder.search();
+            let ms_end = (new Date()).getTime();
+
+            console.log(result)
+            document.getElementById('datediv').innerHTML = 'Time: ' +'<b>'+ (ms_end - ms_start) / 1000 + 's'+'</b>';
+            if (!result.isMatch) {
+                document.getElementById('outputdiv').innerHTML = 'No match found.';
+            } else {
+                result.allMatches.forEach(({match,score})=>{
+                    var quote = match;
+                    quote = quote.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    quote = quote.replace(/\n/g, '&para;');
+                    document.getElementById('outputdiv').innerHTML = 'Match found at character: ' + '<b>'+quote+'</b>' + '</br>'+'Score: '+'<b>'+score+'</b>';
+                })
+                document.getElementById('outputdiv').scrollIntoView()
+            }
+        }
+
+        function textchange() {
+            document.getElementById('maxtextspan').innerHTML = '(text is currently ' + document.getElementById('text').value.length + ' characters long)';
+        }
+
+        textchange();
+        document.getElementById('pattern').maxLength = 32;
+        document.getElementById('maxlengthspan').innerHTML = '(maxlength in this browser: ' + 32 + ')';
+    </script>
+</body>
+
+</html>

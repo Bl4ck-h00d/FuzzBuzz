@@ -14,7 +14,7 @@ class BitapSearch {
   constructor(
     pattern,
     text,
-    options = { matchThreshold: 1, matchDistance: 100, location: 0 }
+    options = { matchThreshold: 0.6, matchDistance: 100, location: 0 }
   ) {
     this.pattern = pattern.toLowerCase();
     this.text = text.toLowerCase();
@@ -75,16 +75,14 @@ class BitapSearch {
       }
       totalScore += score;
       if (hasMatches) {
-        allMatches = [...allMatches, possibleMatches];
+        allMatches = [...allMatches, ...possibleMatches];
       }
     });
-
-    console.log("Chunks", this.__chunks);
 
     const result = {
       isMatch: hasMatches,
       score: hasMatches ? totalScore / this.__chunks.length : 1,
-      ...allMatches,
+      allMatches: [...allMatches],
     };
 
     return result;
